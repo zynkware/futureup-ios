@@ -18,50 +18,51 @@ class HomeViewModel: ObservableObject {
     @Published var allCoins: [CryptoCoinModel] = []
     @Published var isLoading: Bool = true
     
-    @Published var image: UIImage? = nil
-    var cancellables = Set<AnyCancellable>()
-    
     init() {
-        getCoins()
+        getCoinsWithURLSession()
         reloadAllMyCoins()
     }
     
     func reloadAllMyCoins() {} // Fetch your coins from wallet
     
     func storeAllMyCoins() {} // Store your coins to wallet
+        
+    // Download data using URLSession
     
-    func getCoins() {
+    func getCoinsWithURLSession() {
         guard let url = URL(string: UIViewConstants.Networking.url) else { return }
-        
-        // Combine workflow:
-        // 1. Create the dataTaskPublisher
-        // 2. Recieve -> where to receive data: main thread
-        // 3. TryMap -> we check that the data != nil
-        // 4. Decode -> decode data to our Model
-        // 5. Sink -> receive data in ViewModel
-        // 6. Store -> cancel subscription
-        
-        URLSession.shared.dataTaskPublisher(for: url)
-            .receive(on: DispatchQueue.main)
-            .tryMap(handleOutput)
-            .decode(type: [CryptoCoinModel].self, decoder: JSONDecoder())
-            .replaceError(with: [])
-            .sink(receiveValue: { [weak self] returnedCoins in
-                
-                // Optional: check if we have other coins by id
-                self?.allCoins = returnedCoins
-                self?.isLoading = false
-            })
-            .store(in: &cancellables)
+         
+        downloadData(fromURL: url) { returnedData in
+            if let data = returnedData {
+                guard let decodedCoins = try? JSONDecoder().decode([CryptoCoinModel].self, from: data) else { return }
+                DispatchQueue.main.async { [weak self] in
+                    
+                    // Decoded data using CryptoCoinModel
+                    self?.allCoins = decodedCoins
+                    self?.isLoading = false
+                }
+            } else {
+                print("No data returned.")
+            }
+        }
     }
     
-    func handleOutput(output: URLSession.DataTaskPublisher.Output) throws -> Data {
-        guard
-            let response = output.response as? HTTPURLResponse,
-            response.statusCode >= 200, response.statusCode < 300
-        else {
-            throw URLError(.badServerResponse)
-        }
-        return output.data
+    // Handle session w/ @escaping
+    func downloadData(fromURL url: URL, completionHandler: @escaping (_ data: Data?) -> Void) {
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard
+                let data = data,
+                error == nil,
+                let response = response as? HTTPURLResponse,
+                response.statusCode >= 200, response.statusCode < 300
+            else {
+                print("Error downloading data.")
+                completionHandler(nil)
+                return
+            }
+
+            completionHandler(data)
+
+        }.resume()
     }
 }
