@@ -21,6 +21,10 @@ Examine the project guidelines paper and presentation or the following link for 
 
 https://bit.ly/futureUP_iOS
 
+Presentations:
+
+https://bit.ly/futureUP_iOS_presentation
+
 4. Final steps
 
 Put your creativity to work and start making the application.
