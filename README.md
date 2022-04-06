@@ -19,7 +19,7 @@ https://docs.github.com/en/repositories/creating-and-managing-repositories/cloni
 
 Examine the project guidelines paper and presentation or the following link for a list of all the things you need to accomplish and change:
 
-https://bit.ly/futureUP_iOS
+https://bit.ly/futureUP_iOS_guidelines
 
 Presentations:
 
